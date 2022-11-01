@@ -4,27 +4,50 @@ import com.chess.engine.Alliance;
 import com.chess.engine.pieces.*;
 import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Board {
     private final List<Tile> gameBoard;
     private final Collection<Piece> whitePieces;
     private final Collection<Piece> blackPieces;
-    private Board(Builder builder){
+
+    private Board(Builder builder) {
         this.gameBoard = createGameBoard(builder);
         this.whitePieces = calculateActivePieces(gameBoard, Alliance.WHITE);
         this.blackPieces = calculateActivePieces(gameBoard, Alliance.BLACK);
+
+        final Collection<Move> whiteLegalMoves = calculateLegalMoves(this.whitePieces);
+        final Collection<Move> blackLegalMoves = calculateLegalMoves(this.blackPieces);
+
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < BoardUtils.NUM_TILES; i++) {
+            final String tileText = this.gameBoard.get(i).toString();
+            sb.append(String.format("%3s", tileText));
+            if ((i + 1) % BoardUtils.NUM_TILES_PER_ROW == 0) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) {
+        final List<Move> legalMoves = new ArrayList<>();
+        for (final Piece piece : pieces) {
+            legalMoves.addAll(piece.calculateLegalMoves(this));
+        }
+        return ImmutableList.copyOf(legalMoves);
     }
 
     private static Collection<Piece> calculateActivePieces(final List<Tile> gameBoard, final Alliance alliance) {
         List<Piece> activePieces = new ArrayList<>();
-        for(final Tile tile : gameBoard){
-            if(tile.isTileOccupied()){
+        for (final Tile tile : gameBoard) {
+            if (tile.isTileOccupied()) {
                 final Piece piece = tile.getPiece();
-                if(piece.getPieceAlliance() == alliance){
+                if (piece.getPieceAlliance() == alliance) {
                     activePieces.add(piece);
                 }
             }
@@ -37,14 +60,15 @@ public class Board {
         return gameBoard.get(tileCoordinate);
     }
 
-    private static List<Tile> createGameBoard(final Builder builder){
+    private static List<Tile> createGameBoard(final Builder builder) {
         final Tile[] tiles = new Tile[BoardUtils.NUM_TILES];
-        for(int i = 0; i < BoardUtils.NUM_TILES; i++){
+        for (int i = 0; i < BoardUtils.NUM_TILES; i++) {
             tiles[i] = Tile.createTile(i, builder.boardConfig.get(i));
         }
         return ImmutableList.copyOf(tiles);
     }
-    public static Board createStandarBoard(){
+
+    public static Board createStandardBoard() {
         final Builder builder = new Builder();
         //black layout
         builder.setPiece(new Rook(Alliance.BLACK, 0));
@@ -85,25 +109,27 @@ public class Board {
 
         return builder.build();
     }
-    public static class Builder{
+
+    public static class Builder {
 
         Map<Integer, Piece> boardConfig;
         Alliance nextMoveMaker;
 
-        public Builder(){
-
+        public Builder() {
+            this.boardConfig = new HashMap<>();
         }
 
-        public Builder setPiece(final Piece piece){
+        public Builder setPiece(final Piece piece) {
             this.boardConfig.put(piece.getPiecePosition(), piece);
             return this;
         }
 
-        public Builder setMoveMaker(final Alliance nextMoveMaker){
+        public Builder setMoveMaker(final Alliance nextMoveMaker) {
             this.nextMoveMaker = nextMoveMaker;
             return this;
         }
-        public Board build(){
+
+        public Board build() {
             return new Board(this);
         }
 
