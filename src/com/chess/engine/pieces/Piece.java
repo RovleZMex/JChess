@@ -11,6 +11,7 @@ public abstract class Piece {
     protected final int piecePosition;
     protected final Alliance pieceAlliance;
     protected final boolean isFirstMove;
+    private final int cachedHashCode;
 
     Piece(final int piecePosition, final Alliance pieceAlliance, final PieceType pieceType) {
         this.pieceAlliance = pieceAlliance;
@@ -18,11 +19,41 @@ public abstract class Piece {
         //TODO more work here!!
         this.isFirstMove = false;
         this.pieceType = pieceType;
+        this.cachedHashCode = computeHashCode();
     }
 
-    public PieceType getPieceType(){
+    private int computeHashCode() {
+        int result = pieceType.hashCode();
+        result = 31 * result + pieceAlliance.hashCode();
+        result = 31 * result + piecePosition;
+        result = 31 * result + (isFirstMove() ? 1 : 0);
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Piece)) {
+            return false;
+        }
+        final Piece otherPiece = (Piece) other;
+        return piecePosition == otherPiece.getPiecePosition() &&
+                pieceType == otherPiece.getPieceType() &&
+                pieceAlliance == otherPiece.getPieceAlliance() &&
+                isFirstMove == otherPiece.isFirstMove();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.cachedHashCode;
+    }
+
+    public PieceType getPieceType() {
         return this.pieceType;
     }
+
     public int getPiecePosition() {
         return this.piecePosition;
     }
@@ -37,42 +68,75 @@ public abstract class Piece {
 
     public abstract Collection<Move> calculateLegalMoves(final Board board);
 
+    public abstract Piece movePiece(Move move);
+
+
     public enum PieceType {
 
-        PAWN("P"){
+        PAWN("P") {
             @Override
-            public boolean isKing(){
+            public boolean isKing() {
+                return false;
+            }
+
+            @Override
+            public boolean isRook() {
                 return false;
             }
         },
-        KNIGHT("N"){
+        KNIGHT("N") {
             @Override
-            public boolean isKing(){
+            public boolean isKing() {
+                return false;
+            }
+
+            @Override
+            public boolean isRook() {
                 return false;
             }
         },
-        BISHOP("B"){
+        BISHOP("B") {
             @Override
-            public boolean isKing(){
+            public boolean isKing() {
+                return false;
+            }
+
+            @Override
+            public boolean isRook() {
                 return false;
             }
         },
-        ROOK("R"){
+        ROOK("R") {
             @Override
-            public boolean isKing(){
+            public boolean isKing() {
                 return false;
             }
-        },
-        QUEEN("Q"){
+
             @Override
-            public boolean isKing(){
-                return false;
-            }
-        },
-        KING("K"){
-            @Override
-            public boolean isKing(){
+            public boolean isRook() {
                 return true;
+            }
+        },
+        QUEEN("Q") {
+            @Override
+            public boolean isKing() {
+                return false;
+            }
+
+            @Override
+            public boolean isRook() {
+                return false;
+            }
+        },
+        KING("K") {
+            @Override
+            public boolean isKing() {
+                return true;
+            }
+
+            @Override
+            public boolean isRook() {
+                return false;
             }
         };
 
@@ -88,6 +152,8 @@ public abstract class Piece {
         }
 
         public abstract boolean isKing();
+
+        public abstract boolean isRook();
     }
 
 }
